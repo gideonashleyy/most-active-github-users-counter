@@ -28,7 +28,6 @@ jobs:
             --consider 10 \
             --output json \
             --file ./data
-      steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
