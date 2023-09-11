@@ -1,4 +1,4 @@
-name: Go
+name: Build Project
 
 on:
   push:
@@ -6,23 +6,30 @@ on:
   pull_request:
     branches: [ master ]
 
+env:
+  TOKENZ: ${{ secrets.TOKENZ }}
+
 jobs:
-
   build:
+    timeout-minutes: 90
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.15
-
-    - name: Vet
-      run: go vet -v ./...
-
-    - name: Build
-      run: go build -v ./...
-
-    - name: Test
-      run: go test -v ./...
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+      - run: |
+          go run *.go \
+            --token ${{ secrets.TOKENZ }} \
+            --preset indonesia \
+            --amount 10 \
+            --consider 10 \
+            --output json \
+            --file ./data
+      - name: Upload data.json as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: data
+          path: ./data/data.json

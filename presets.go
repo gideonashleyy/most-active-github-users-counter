@@ -1,13 +1,30 @@
 package main
 
+import (
+	"crypto/sha256"
+	"fmt"
+	"io"
+	"strings"
+)
+
 type QueryPreset struct {
+	title   string
 	include []string
 	exclude []string
 }
 
 var PRESETS = map[string]QueryPreset{
+	"cyprus": QueryPreset{
+		include: []string{"cyprus", "nicosia", "lefkosia", "limassol", "lemessos", "larnaka", "paphos"},
+	},
 	"austria": QueryPreset{
 		include: []string{"austria", "österreich", "vienna", "wien", "linz", "salzburg", "graz", "innsbruck", "klagenfurt", "wels", "dornbirn"},
+	},
+	"armenia": QueryPreset{
+		include: []string{"armenia", "yerevan", "gyumri", "vanadzor", "vagharshapat", "abovyan", "kapan", "hrazdan", "armavir", "artashat", "ijevan", "gavar", "goris", "dilijan", "stepanakert", "martuni", "sisian", "alaverdi", "stepanavan", "berd"},
+	},
+	"oman": QueryPreset{
+		include: []string{"oman", "ad+dakhiliyah", "ad+dhahirah", "batinah+north", "batinah+south", "al+buraymi", "al+wusta", "ash+sharqiyah+north", "ash+sharqiyah+south", "dhofar", "muscat", "musandam"},
 	},
 	"finland": QueryPreset{
 		include: []string{"finland", "suomi", "helsinki", "tampere", "oulu", "espoo", "vantaa", "turku", "rovaniemi", "jyväskylä", "lahti", "kuopio", "pori", "lappeenranta", "vaasa"},
@@ -34,7 +51,7 @@ var PRESETS = map[string]QueryPreset{
 		include: []string{"russia", "moscow", "saint+petersburg", "novosibirsk", "yekaterinburg", "nizhny+novgorod", "samara", "omsk", "kazan", "chelyabinsk", "rostov-on-don", "ufa", "volgograd"},
 	},
 	"estonia": QueryPreset{
-		include: []string{"estonia", "eesti", "tallinn", "tartu", "narva", "pärnu"},
+		include: []string{"estonia", "eesti", "tallinn", "tartu", "narva", "pärnu", "rakvere", "kohtla-järve", "viljandi", "maardu", "sillamäe"},
 	},
 	"denmark": QueryPreset{
 		include: []string{"denmark", "danmark", "copenhagen", "aarhus", "odense", "aalborg"},
@@ -52,6 +69,7 @@ var PRESETS = map[string]QueryPreset{
 		include: []string{"italy", "italia", "rome", "roma", "milan", "naples", "napoli", "turin", "torino", "palermo", "genoa", "genova", "bologna", "florence", "firenze", "bari", "catania", "venice", "verona"},
 	},
 	"uk": QueryPreset{
+		title:   "UK",
 		include: []string{"uk", "england", "scotland", "wales", "northern+ireland", "london", "birmingham", "leeds", "glasgow", "sheffield", "bradford", "manchester", "edinburgh", "liverpool", "bristol", "cardiff", "belfast", "leicester", "wakefield", "coventry", "nottingham", "newcastle"},
 	},
 	"croatia": QueryPreset{
@@ -61,7 +79,7 @@ var PRESETS = map[string]QueryPreset{
 		include: []string{},
 	},
 	"china": QueryPreset{
-		include: []string{"china", "中国", "guangzhou", "shanghai", "beijing", "hangzhou", "hong+kong"},
+		include: []string{"china", "中国", "guangzhou", "shanghai", "beijing", "hangzhou"},
 	},
 	"india": QueryPreset{
 		include: []string{"india", "mumbai", "delhi", "bangalore", "hyderabad", "ahmedabad", "chennai", "kolkata", "jaipur"},
@@ -76,10 +94,10 @@ var PRESETS = map[string]QueryPreset{
 		include: []string{"pakistan", "karachi", "lahore", "faisalabad", "rawalpindi", "peshawar", "islamabad"},
 	},
 	"brazil": QueryPreset{
-		include: []string{"brazil", "brasil", "são+paulo", "brasília", "salvador", "fortaleza", "belo+horizonte", "manaus", "curitiba", "recife", "porto+alegre", "florianópolis"},
+		include: []string{"brazil", "brasil", "são+paulo", "brasília", "salvador", "fortaleza", "belém", "belo+horizonte", "manaus", "curitiba", "recife", "rio+de+janeiro", "maceió", "aracaju", "porto+alegre", "florianópolis"},
 	},
 	"nigeria": QueryPreset{
-		include: []string{"nigeria", "lagos", "kano", "ibadan", "benin+city", "port+harcourt", "jos", "ilorin"},
+		include: []string{"nigeria", "lagos", "kano", "ibadan", "benin+city", "port+harcourt", "jos", "ilorin", "kaduna"},
 	},
 	"bangladesh": QueryPreset{
 		include: []string{"bangladesh", "dhaka", "chittagong", "khulna", "rajshahi", "barisal", "sylhet", "rangpur", "comilla", "gazipur"},
@@ -106,8 +124,11 @@ var PRESETS = map[string]QueryPreset{
 	"iran": QueryPreset{
 		include: []string{"iran", "tehran", "mashhad", "isfahan", "esfahan", "karaj", "shiraz", "tabriz", "qom", "ahvaz", "ahwaz", "kermanshah", "urmia", "rasht", "kerman"},
 	},
-	"congo": QueryPreset{
-		include: []string{"congo", "drc", "kinshasa", "lubumbashi", "bukavu", "kananga", "goma"},
+	"congo kinshasa": QueryPreset{
+		include: []string{"congo+kinshasa", "drc", "cod", "kinshasa", "lubumbashi", "bukavu", "kananga", "goma", "mbuji+mayi", "likasi", "kolwezi", "kalemie", "uvira", "matadi", "moba", "kamina", "kabalo", "fungurume"},
+	},
+	"congo brazzaville": QueryPreset{
+		include: []string{"congo+brazza", "cog", "brazzaville", "djambala", "pointe+noire", "sibiti", "owando", "madingou", "loango", "kinkala", "impfondo", "dolisie"},
 	},
 	"turkey": QueryPreset{
 		include: []string{"turkey", "turkiye", "istanbul", "ankara", "izmir", "bursa", "adana", "gaziantep", "konya", "antalya", "kayseri", "mersin", "eskisehir", "samsun", "denizli", "malatya"},
@@ -125,13 +146,14 @@ var PRESETS = map[string]QueryPreset{
 		include: []string{"tanzania", "dar+es+salaam", "mwanza", "arusha", "dodoma", "mbeya", "morogoro", "tanga", "kilimanjaro"},
 	},
 	"south korea": QueryPreset{
+		title:   "Republic of Korea",
 		include: []string{"south+korea", "ROK", "korea", "seoul", "busan", "incheon", "daegu", "daejeon", "gwangju", "대한민국", "서울", "서울시"},
 	},
 	"colombia": QueryPreset{
 		include: []string{"colombia", "bogota", "medellin", "cali", "barranquilla", "cartagena", "cucuta", "bucaramanga", "ibague", "soledad", "pereira", "santa+marta"},
 	},
 	"kenya": QueryPreset{
-		include: []string{"kenya", "nairobi", "mombasa", "kisumu", "nakuru", "eldoret", "kisii", "nyeri"},
+		include: []string{"kenya", "nairobi", "mombasa", "kisumu", "nakuru", "eldoret", "kisii", "nyeri", "machakos", "Embu"},
 	},
 	"argentina": QueryPreset{
 		include: []string{"argentina", "buenos+aires", "cordoba", "rosario", "mendoza", "la+plata", "tucuman", "mar+del+plata", "salta", "resistencia"},
@@ -188,6 +210,9 @@ var PRESETS = map[string]QueryPreset{
 	"romania": QueryPreset{
 		include: []string{"romania", "bucharest", "cluj", "iasi", "timisoara", "craiova", "brasov", "sibiu", "constanta", "oradea", "galati", "ploesti", "pitesti", "arad", "bacau"},
 	},
+	"moldova": QueryPreset{
+		include: []string{"moldova", "chisinau", "tiraspol", "balti", "bender", "ribnita", "cahul", "ungheni", "soroca", "orhei", "dubasari"},
+	},
 	"belarus": QueryPreset{
 		include: []string{"belarus", "minsk", "brest,belarus", "grodno", "gomel", "vitebsk", "mogilev", "slutsk", "borisov", "pinsk", "baranovichi", "bobruisk", "soligorsk"},
 	},
@@ -195,10 +220,10 @@ var PRESETS = map[string]QueryPreset{
 		include: []string{"malta", "birgu", "bormla", "mdina", "qormi", "senglea", "siġġiewi", "valletta", "zabbar", "zebbuġ", "zejtun"},
 	},
 	"rwanda": QueryPreset{
-		include: []string{"rwanda", "kigali", "butare", "muhanga", "ruhengeri", "gisenyi"},
+		include: []string{"rwanda", "kigali", "butare", "muhanga", "ruhengeri", "gisenyi", "nyarugenge", "huye", "musanze", "rubavu", "rwamagana", "kirehe", "kibungo", "ngoma", "nyagatare", "gicumbi", "nyabihu", "kibuye", "karongi", "rusizi", "nyamasheke", "ruhango", "nyanza", "kamonyi", "kicukiro", "gasabo"},
 	},
 	"saudi arabia": QueryPreset{
-		include: []string{"Saudi", "KSA", "Riyadh", "Mecca"},
+		include: []string{"Saudi", "KSA", "Riyadh", "Mecca", "Jeddah", "Dammam"},
 	},
 	"morocco": QueryPreset{
 		include: []string{"morocco", "casablanca", "fez", "tangier", "marrakesh", "salé", "meknes", "rabat", "oujda", "kenitra", "agadir", "tetouan", "temara", "safi", "mohammedia", "khouribga", "el+jadida"},
@@ -207,10 +232,10 @@ var PRESETS = map[string]QueryPreset{
 		include: []string{"uzbekistan", "tashkent", "namangan", "samarkand", "andijan", "nukus", "bukhara", "qarshi", "fergana"},
 	},
 	"malaysia": QueryPreset{
-		include: []string{"malaysia", "kuala+lumpur", "kajang", "klang", "subang", "penang", "ipoh", "selangor", "melaka", "johor", "sabah"},
+		include: []string{"malaysia", "kuala+lumpur", "kajang", "klang", "subang", "penang", "ipoh", "selangor", "melaka", "johor", "sabah", "johor+bahru", "shah+alam", "iskandar+puteri"},
 	},
 	"afghanistan": QueryPreset{
-		include: []string{"afghanistan", "kabul", "kandahar", "herat", "mazar-e-sharif", "jalalabad", "ghazni", "nangarhar"},
+		include: []string{"afghanistan", "kabul", "kandahar", "herat", "mazar-e-sharif", "jalalabad", "ghazni", "nangarhar", "khost", "zabul", "helmand", "parwan", "farah", "kunar", "wardak", "baghlan", "kunduz", "takhar", "paktia", "paktika"},
 	},
 	"venezuela": QueryPreset{
 		include: []string{"venezuela", "caracas", "maracaibo", "barquisimeto", "guayana", "maturín", "zulia", "bolivar"},
@@ -270,13 +295,13 @@ var PRESETS = map[string]QueryPreset{
 		include: []string{"cambodia", "phnom", "battambang", "siem+reap", "kampong"},
 	},
 	"senegal": QueryPreset{
-		include: []string{"senegal", "dakar", "touba", "thies", "rufisque"},
+		include: []string{"senegal", "dakar", "touba", "thies", "rufisque", "kaolack", "ziguinchor", "tambacounda", "kaffrine", "diourbel"},
 	},
 	"chad": QueryPreset{
 		include: []string{"chad", "tchad", "n'djamena", "moundou"},
 	},
 	"somalia": QueryPreset{
-		include: []string{"somalia", "mogadishu", "hargeisa", "bosaso", "borama"},
+		include: []string{"somalia", "mogadishu", "hargeisa", "bosaso", "borama", "garowe", "kismayo"},
 	},
 	"zimbabwe": QueryPreset{
 		include: []string{"zimbabwe", "harare", "bulawayo", "mutare", "gweru", "kwekwe"},
@@ -309,7 +334,7 @@ var PRESETS = map[string]QueryPreset{
 		include: []string{"dominican+republic", "republica+dominicana", "santo+domingo", "la+vega", "macoris"},
 	},
 	"czech republic": QueryPreset{
-		include: []string{"czech", "ceska", "prague", "budejovice", "plzen", "karlovy", "ostrava", "brno"},
+		include: []string{"czech", "czechia", "ceska", "prague", "budejovice", "plzen", "karlovy", "ostrava", "brno"},
 	},
 	"jordan": QueryPreset{
 		include: []string{"jordan", "amman", "zarqa", "irbid"},
@@ -318,6 +343,7 @@ var PRESETS = map[string]QueryPreset{
 		include: []string{"azerbaijan", "baku", "sumqayit", "ganja", "lankaran"},
 	},
 	"uae": QueryPreset{
+		title:   "UAE",
 		include: []string{"uae", "emirates", "dubai", "abu+dhabi", "sharjah", "al+ain", "ajman"},
 	},
 	"honduras": QueryPreset{
@@ -345,7 +371,10 @@ var PRESETS = map[string]QueryPreset{
 		include: []string{"ireland", "dublin", "cork", "limerick", "galway", "waterford+ireland", "drogheda", "dundalk"},
 	},
 	"hong kong": QueryPreset{
-		include: []string{"hong+kong", "kowloon"},
+		include: []string{"hong+kong", "香港", "kowloon", "九龍"},
+	},
+	"macau": QueryPreset{
+		include: []string{"macau", "macao"},
 	},
 	"el salvador": QueryPreset{
 		include: []string{"el+salvador"},
@@ -377,14 +406,58 @@ var PRESETS = map[string]QueryPreset{
 	"slovakia": QueryPreset{
 		include: []string{"slovakia", "bratislava", "kosice", "presov", "zilina"},
 	},
+	"slovenia": QueryPreset{
+		include: []string{"slovenia", "slovenija", "ljubljana", "maribor", "celje", "kranj", "koper", "velenje", "novo+mesto", "nova+gorica", "krsko", "krško", "murska+sobota", "postojna", "slovenj+gradec"},
+	},
 	"lithuania": QueryPreset{
 		include: []string{"lithuania", "vilnius", "kaunas", "klaipeda", "siauliai", "panevezys", "alytus"},
 	},
+	"uruguay": QueryPreset{
+		include: []string{"uruguay", "montevideo"},
+	},
 	"united states": QueryPreset{
 		include: []string{",+US", "USA", "United+States", "Alabama", ",+AL", "Alaska", ",+AK", "Arizona", ",+AZ", "Arkansas", ",+AR", "California", ",+CA", "Colorado", ",+CO", "Connecticut", ",+CT", "Delaware", ",+DE", "Florida", ",+FL", "Georgia", ",+GA", "Hawaii", ",+HI", "Idaho", ",+ID", "Illinois", ",+IL", "Indiana", ",+IN", "Iowa", ",+IA", "Kansas", ",+KS", "Kentucky", ",+KY", "Louisiana", ",+LA", "Maine", ",+ME", "Maryland", ",+MD", "Massachusetts", ",+MA", "Michigan", ",+MI", "Minnesota", ",+MN", "Mississippi", ",+MS", "Missouri", ",+MO", "Montana", ",+MT", "Nebraska", ",+NE", "Nevada", ",+NV", "New+Hampshire", ",+NH", "New+Jersey", ",+NJ", "New+Mexico", ",+NM", "New+York", ",+NY", "North+Carolina", ",+NC", "North+Dakota", ",+ND", "Ohio", ",+OH", "Oklahoma", ",+OK", "Oregon", ",+OR", "Pennsylvania", ",+PA", "Rhode+Island", ",+RI", "South+Carolina", ",+SC", "South+Dakota", ",+SD", "Tennessee", ",+TN", "Texas", ",+TX", "Utah", ",+UT", "Vermont", ",+VT", "Virginia", ",+VA", "Washington", ",+WA", "West+Virginia", ",+WV", "Wisconsin", ",+WI", "Wyoming", ",+WY", "Los+Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San+Antonio", "San+Diego", "Dallas", "San+Jose", "Austin", "Jacksonville", "Fort+Worth", "Columbus", "Charlotte", "San+Francisco", "Indianapolis", "Seattle", "Denver", "Boston", "El+Paso", "Nashville", "Detroit", "Portland", "Las+Vegas", "Memphis", "Louisville", "Baltimore"},
+	},
+	"macedonia": QueryPreset{
+		include: []string{"macedonia", "fyrom", "north+macedonia", "mk", "mkd", "ohd", "skp", "skopje", "bitola", "kumanovo", "prilep", "tetovo", "veles", "shtip", "ohrid", "gostivar", "strumica"},
+	},
+	"palestine": QueryPreset{
+		include: []string{"jerusalem", "gaza", "hebron", "jenin", "nablus", "ramallah", "rafah"},
+	},
+	"mauritania": QueryPreset{
+		include: []string{"mauritania", "mauritanie", "nouakchott", "nouadhibou"},
+	},
+	"botswana": QueryPreset{
+		include: []string{"botswana", "gaborone", "francistown"},
+	},
+	"iraq": QueryPreset{
+		include: []string{"baghdad", "mosul", "basra", "kirkuk", "erbil", "najaf", "karbala", "sulaymaniya", "al-nasiriya", "al-amarah"},
+	},
+	"qatar": QueryPreset{
+		include: []string{"Qatar", "Doha"},
+	},
+	"the bahamas": QueryPreset{
+		include: []string{"Bahamas"},
+	},
+	"gabon": QueryPreset{
+		include: []string{"gabon", "Libreville", "Port-gentil", "Franceville", "Oyem", "Moanda"},
 	},
 }
 
 func Preset(name string) QueryPreset {
 	return PRESETS[name]
+}
+
+func PresetTitle(name string) string {
+	title := Preset(name).title
+	if title == "" {
+		title = strings.Title(name)
+	}
+	return title
+}
+
+func PresetChecksum(name string) string {
+	hash := sha256.New()
+	io.WriteString(hash, fmt.Sprintf("%+v", Preset(name)))
+	return fmt.Sprintf("%x", hash.Sum(nil))
 }

@@ -2,6 +2,7 @@ package output
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -21,7 +22,7 @@ func PlainOutput(results github.GithubSearchResults, writer io.Writer, options t
 	users := GithubUserList(results.Users)
 	fmt.Fprintln(writer, "USERS\n--------")
 	for i, user := range users {
-		fmt.Fprintf(writer, "#%+v: %+v (%+v):%+v (%+v) %+v\n", i+1, user.Name, user.Login, user.ContributionCount, user.Company, strings.Join(user.Organizations, ","))
+		fmt.Fprintf(writer, "#%+v: %+v (%+v):%+v (%+v) %+v\n", i+1, user.Name, user.Login, user.FollowerCount, user.ContributionCount, user.Company, user.AvatarURL)
 	}
 	fmt.Fprintln(writer, "\nORGANIZATIONS\n--------")
 	for i, org := range users.TopOrgs(10) {
@@ -33,22 +34,54 @@ func PlainOutput(results github.GithubSearchResults, writer io.Writer, options t
 func CsvOutput(results github.GithubSearchResults, writer io.Writer, options top.Options) error {
 	users := GithubUserList(results.Users)
 	w := csv.NewWriter(writer)
-	if err := w.Write([]string{"rank", "name", "login", "contributions", "company", "organizations"}); err != nil {
+	if err := w.Write([]string{"followerRank", "name", "username", "followers", "contributions", "company", "avatarUrl"}); err != nil {
 		return err
 	}
 	for i, user := range users {
 		rank := strconv.Itoa(i + 1)
 		name := user.Name
 		login := user.Login
+		followers := strconv.Itoa(user.FollowerCount)
 		contribs := strconv.Itoa(user.ContributionCount)
-		orgs := strings.Join(user.Organizations, ",")
 		company := user.Company
-		if err := w.Write([]string{rank, name, login, contribs, company, orgs}); err != nil {
+		avatarUrl := user.AvatarURL
+		if err := w.Write([]string{rank, name, login, followers, contribs, company, avatarUrl}); err != nil {
 			return err
 		}
 	}
 	w.Flush()
 	return nil
+}
+
+func JsonOutput(results github.GithubSearchResults, writer io.Writer, options top.Options) error {
+    users := GithubUserList(results.Users)
+    outputData := make(map[string]interface{})
+    userList := make([]map[string]interface{}, len(users))
+
+    for i, user := range users {
+        userData := map[string]interface{}{
+            "name":           user.Name,
+            "username":       user.Login,
+            "followerRank":   i + 1,
+            "followers":      user.FollowerCount,
+            "contributions":  user.ContributionCount,
+			"contributionRank": "",
+            "avatarUrl":      user.AvatarURL,
+            "company":        user.Company,
+        }
+        userList[i] = userData
+    }
+
+    outputData["users"] = userList
+    outputData["MinimumFollowerCount"] = results.MinimumFollowerCount
+
+    // Encode the outputData to JSON and write it to the writer.
+    encoder := json.NewEncoder(writer)
+    encoder.SetIndent("", "  ") // Set indentation for pretty printing
+    if err := encoder.Encode(outputData); err != nil {
+        return err
+    }
+    return nil
 }
 
 type ContributionsSelector func(github.User) int
@@ -125,9 +158,14 @@ func YamlOutput(results github.GithubSearchResults, writer io.Writer, options to
 	fmt.Fprintln(writer, "\nprivate_organizations:")
 	outputOrganizations(topPrivate.TopOrgs(10))
 
-	fmt.Fprintf(writer, "generated: %+v\n", time.Now())
+	fmt.Fprintf(writer, "generated: %+v\n", time.Now().Format(time.RFC3339))
 	fmt.Fprintf(writer, "min_followers_required: %+v\n", results.MinimumFollowerCount)
 	fmt.Fprintf(writer, "total_user_count: %+v\n", results.TotalUserCount)
+
+	if options.PresetTitle != "" && options.PresetChecksum != "" {
+		fmt.Fprintf(writer, "title: %+v\n", options.PresetTitle)
+		fmt.Fprintf(writer, "definition_checksum: %+v\n", options.PresetChecksum)
+	}
 
 	return nil
 }

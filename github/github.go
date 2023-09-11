@@ -97,7 +97,7 @@ Pages:
                 avatarUrl,
                 name,
                 company,
-                organizations(first: 100) {
+                organizations(first: 1) {
                   nodes {
                     login
                   }
