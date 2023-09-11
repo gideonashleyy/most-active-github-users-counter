@@ -28,17 +28,9 @@ jobs:
             --consider 10 \
             --output json \
             --file ./data
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - run: ls -al
-      - run: pwd
-      # - run: node code.js
       - name: Upload data.json as Artifact
         uses: actions/upload-artifact@v2
         with:
           name: data
           path: ./data.json
       - run: ls -al
-      - run: pwd
