@@ -32,6 +32,8 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+      - run: ls -al
+      - run: pwd
       - run: node code.js
       - name: Upload data.json as Artifact
         uses: actions/upload-artifact@v2
