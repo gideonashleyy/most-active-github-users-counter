@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 // Read and parse JSON data from file
-let rawdata = fs.readFileSync('data.json');
+let rawdata = fs.readFileSync('./data.json');
 let data = JSON.parse(rawdata);
 
 // Sort users by contributions in descending order and assign contribution rank
