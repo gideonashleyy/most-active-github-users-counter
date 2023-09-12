@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
@@ -28,15 +28,17 @@ jobs:
             --consider 10 \
             --output json \
             --file ./data
+      - run: ls -al
+      - run: cat data.json || echo "data.json not found"
       - name: Upload data.json as Artifact
         uses: actions/upload-artifact@v2
         with:
           name: data
           path: ./data.json
-      - run: ls -al
-      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+      - run: ls -al
+      - run: cat data.json || echo "data.json not found 2"
       - run: node code.js
       - run: ls -al
