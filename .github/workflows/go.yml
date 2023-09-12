@@ -17,12 +17,10 @@ jobs:
     steps:
       - name: Checkout
       - uses: actions/checkout@v2
-
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: 'stable'
-
       - name: Genereate data using Go
       - run: |
           go run *.go \
@@ -32,21 +30,16 @@ jobs:
             --consider 10 \
             --output json \
             --file ./data
-      
       - name: Check file list
       - run: ls -al
-
       - name: Set up Node
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-
       - name: Modify data using Node
       - run: node code.js
-
       - name: Check file list
       - run: ls -al
-      
       - name: Upload data.json as Artifact
         uses: actions/upload-artifact@v2
         with:
