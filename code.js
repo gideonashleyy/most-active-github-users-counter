@@ -13,14 +13,7 @@ data.users.forEach((user, index) => {
 // Sort users by follower rank in ascending order
 data.users.sort((a, b) => a.followerRank - b.followerRank);
 
-// Get current date and format as DDMMYYYY
-let today = new Date();
-let dd = String(today.getDate()).padStart(2, '0');
-let mm = String(today.getMonth() + 1).padStart(2, '0'); 
-let yyyy = today.getFullYear();
-let date = dd + mm + yyyy;
-
 // Write modified data back to new JSON file with date in filename
 let newData = JSON.stringify(data, null, 2);
-let filename = date + '-indogithubers.json';
+let filename = 'indogithubers.json';
 fs.writeFileSync(filename, newData);

@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -27,8 +27,8 @@ jobs:
           go run *.go \
             --token ${{ secrets.TOKENZ }} \
             --preset indonesia \
-            --amount 1500 \
-            --consider 1500 \
+            --amount 2000 \
+            --consider 2000 \
             --output json \
             --file ./data
       - run: ls -al
@@ -43,7 +43,7 @@ jobs:
       - run: ls -al
       
       - name: Upload data.json as Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: data
           path: ./*-indogithubers.json
