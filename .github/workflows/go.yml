@@ -16,11 +16,13 @@ jobs:
 
     steps:
       - name: Checkout
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: 'stable'
+
       - run: |
           go run *.go \
             --token ${{ secrets.TOKENZ }} \
@@ -30,12 +32,16 @@ jobs:
             --output json \
             --file ./data
       - run: ls -al
+
       - name: Set up Node
-      - uses: actions/setup-node@v3
+        uses: actions/setup-node@v3
         with:
           node-version: 18
+
       - run: node code.js
+
       - run: ls -al
+      
       - name: Upload data.json as Artifact
         uses: actions/upload-artifact@v2
         with:
