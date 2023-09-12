@@ -22,5 +22,5 @@ let date = dd + mm + yyyy;
 
 // Write modified data back to new JSON file with date in filename
 let newData = JSON.stringify(data, null, 2);
-let filename = date + '-data.json';
+let filename = date + '-indogithubers.json';
 fs.writeFileSync(filename, newData);
