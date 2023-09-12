@@ -34,3 +34,9 @@ jobs:
           name: data
           path: ./data.json
       - run: ls -al
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: node code.js
+      - run: ls -al
