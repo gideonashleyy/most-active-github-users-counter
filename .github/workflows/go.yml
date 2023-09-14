@@ -44,8 +44,10 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --local user.email "depa.article@gmail.com"
-          git config --local user.name "depapp"
+          git config --global user.email "depa.article@gmail.com"
+          git config --global user.name "depapp"
+          git config --global credential.helper store
+          echo "machine github.com login ${{ secrets.GIT_PAT }}" > ~/.netrc
       
       - name: Add and Commit Files
         run: |
@@ -53,12 +55,8 @@ jobs:
           git add indogithubers.json
           git commit -m "update indogithubers data - $current_date"
       
-      - name: GitHub Push
-        uses: ad-m/github-push-action@master
-        with:
-          force_with_lease: true
-          directory: "."
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push Changes
+        run: git push
       
       - name: Upload data.json as Artifact
         uses: actions/upload-artifact@v3
