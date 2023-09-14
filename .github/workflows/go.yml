@@ -56,13 +56,13 @@ jobs:
           git add indogithubers.json
           git commit -m "update indogithubers data - $current_date"
       
-      - name: Push changes
+      - name: GitHub Push
         uses: ad-m/github-push-action@master
         with:
+          force-with-lease: true
+          directory: "."
           github_token: ${{ secrets.GIT_PAT }}
-          directory: .
 
-      
       - name: Upload data.json as Artifact
         uses: actions/upload-artifact@v3
         with:
