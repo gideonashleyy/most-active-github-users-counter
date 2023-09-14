@@ -54,8 +54,12 @@ jobs:
           git commit -m "update indogithubers data - $current_date"
       
       - name: GitHub Push
-        run: git push
-
+        uses: ad-m/github-push-action@master
+        with:
+          force_with_lease: true
+          directory: "."
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Upload data.json as Artifact
         uses: actions/upload-artifact@v3
         with:
