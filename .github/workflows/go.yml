@@ -8,6 +8,7 @@ on:
 
 env:
   TOKENZ: ${{ secrets.TOKENZ }}
+  GIT_PAT: ${{ secrets.GIT_PAT }}
 
 jobs:
   build:
