@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: write
+
 env:
   TOKENZ: ${{ secrets.TOKENZ }}
 
@@ -42,6 +45,19 @@ jobs:
 
       - run: ls -al
       
+      - name: push generated file
+        run: |
+          d=`date '+%Y-%m-%dT%H:%M:%SZ'`
+          echo $d > indo.txt
+          git config --global user.name 'Depa Panjie Purnama'
+          git config --global user.email 'depapp@users.noreply.github.com'
+          ls -al
+          git pull
+          ls -al
+          git add indo.txt
+          git commit -am "update data indo $d"
+          git push
+
       - name: Upload data.json as Artifact
         uses: actions/upload-artifact@v3
         with:
