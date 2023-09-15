@@ -8,7 +8,6 @@ on:
 
 env:
   TOKENZ: ${{ secrets.TOKENZ }}
-  GIT_PAT: ${{ secrets.GIT_PAT }}
 
 jobs:
   build:
@@ -42,29 +41,9 @@ jobs:
       - run: node code.js
 
       - run: ls -al
-
-      - name: Configure Git
-        run: |
-          git config --global user.email "depa.article@gmail.com"
-          git config --global user.name "depapp"
-          git config --global credential.helper store
-          echo "machine github.com login ${{ secrets.GIT_PAT }}" > ~/.netrc
       
-      - name: Add and Commit Files
-        run: |
-          current_date=$(date +"%Y-%m-%d")
-          git add indogithubers.json
-          git commit -m "update indogithubers data - $current_date"
-      
-      - name: GitHub Push
-        uses: ad-m/github-push-action@master
-        with:
-          force_with_lease: true
-          directory: "."
-          github_token: ${{ secrets.GIT_PAT }}
-
       - name: Upload data.json as Artifact
         uses: actions/upload-artifact@v3
         with:
           name: data
-          path: ./*-indogithubers.json
+          path: ./indogithubers.json
