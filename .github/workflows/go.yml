@@ -26,14 +26,14 @@ jobs:
         with:
           go-version: 'stable'
 
-      # - run: |
-      #     go run *.go \
-      #       --token ${{ secrets.TOKENZ }} \
-      #       --preset indonesia \
-      #       --amount 2000 \
-      #       --consider 2000 \
-      #       --output json \
-      #       --file ./data
+      - run: |
+          go run *.go \
+            --token ${{ secrets.TOKENZ }} \
+            --preset indonesia \
+            --amount 2000 \
+            --consider 2000 \
+            --output json \
+            --file ./data
       - run: ls -al
 
       - name: Set up Node
@@ -47,19 +47,11 @@ jobs:
       
       - name: push generated file
         run: |
-          d=`date '+%Y-%m-%dT%H:%M:%SZ'`
-          echo $d > indo.txt
+          d=$(date +"%Y-%m-%d")
           git config --global user.name 'Depa Panjie Purnama'
           git config --global user.email 'depapp@users.noreply.github.com'
-          ls -al
           git pull
           ls -al
-          git add indo.txt
-          git commit -am "update data indo $d"
+          git add indogithubers.json
+          git commit -am "update indogithubers data - $d"
           git push
-
-      - name: Upload data.json as Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: data
-          path: ./indogithubers.json
