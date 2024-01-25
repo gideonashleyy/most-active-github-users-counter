@@ -31,7 +31,7 @@ jobs:
       - run: |
           go run *.go \
             --token ${{ secrets.TOKENZ }} \
-            --preset indonesia \
+            --preset india \
             --amount 6000 \
             --consider 6000 \
             --output json \
