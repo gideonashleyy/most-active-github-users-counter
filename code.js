@@ -15,5 +15,5 @@ data.users.sort((a, b) => a.followerRank - b.followerRank);
 
 // Write modified data back to new JSON file with date in filename
 let newData = JSON.stringify(data, null, 2);
-let filename = 'indogithubers.json';
+let filename = 'indogithubers-india.json';
 fs.writeFileSync(filename, newData);
